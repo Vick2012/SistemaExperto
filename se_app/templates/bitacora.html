@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block titulo %}Bitácora{% endblock %}
+{% block encabezado %}Bitácora de cambios a la base de conocimiento{% endblock %}
+{% block contenido %}
+<div class="tarjeta overflow-x-auto">
+  <table class="tabla">
+    <thead>
+      <tr><th>Fecha</th><th>Usuario</th><th>Tabla</th><th>Registro</th><th>Acción</th><th>Detalle</th></tr>
+    </thead>
+    <tbody>
+    {% for b in filas %}
+      <tr class="align-top">
+        <td class="whitespace-nowrap text-slate-500">{{ b.fecha_cambio | fecha("%d %b %Y, %H:%M") }}</td>
+        <td>{{ b.nombres }} {{ b.apellidos }}<span class="block text-xs text-slate-500">{{ b.usuario }}</span></td>
+        <td>{{ b.tabla_afectada }}</td>
+        <td class="font-mono text-xs">{{ b.codigo_registro }}</td>
+        <td><span class="text-xs rounded-md bg-slate-100 px-2 py-0.5">{{ b.accion }}</span></td>
+        <td class="text-slate-600">{{ b.detalle }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="6" class="py-10 text-center text-slate-500">Aún no hay cambios registrados.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

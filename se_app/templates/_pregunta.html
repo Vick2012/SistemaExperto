@@ -1,0 +1,96 @@
+{# Zona que HTMX reemplaza en cada respuesta. El consultante ve solo la
+   pregunta; el experto ve ademas el panel de razonamiento del motor. #}
+{% import "_ui.html" as ui %}
+{% set base_url = "/diagnostico/" ~ atencion.id_atencion %}
+<div id="zona" class="{{ 'grid xl:grid-cols-5 gap-6 lg:gap-8' if experto else 'max-w-3xl mx-auto' }}">
+  <div class="{{ 'xl:col-span-3' if experto }} space-y-5">
+    <section class="tarjeta p-6 sm:p-10 aparecer">
+      <div class="flex flex-wrap items-center gap-3 text-sm text-slate-500 mb-6">
+        <span class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 text-indigo-700 font-semibold px-2.5 py-1">{{ ui.icono_categoria(atencion.categoria, "w-4 h-4") }}{{ atencion.categoria_nombre }}</span>
+        <span>{{ atencion.vivienda }} · {{ atencion.zona_vivienda }}</span>
+        <span class="ml-auto font-medium text-slate-700">Pregunta {{ numero }} <span class="font-normal text-slate-400">de máx. {{ total }}</span></span>
+      </div>
+      <div class="h-2 rounded-full bg-slate-100 mb-10 overflow-hidden" role="progressbar" aria-valuemin="0" aria-valuemax="{{ total }}" aria-valuenow="{{ numero - 1 }}" aria-label="Avance de las preguntas">
+        <div class="h-2 rounded-full bg-indigo-600 transition-all duration-500" style="width: {{ [((numero - 1) / total * 100) | round, 4] | max }}%"></div>
+      </div>
+
+      <h2 class="text-3xl sm:text-4xl font-semibold leading-tight tracking-tight text-slate-900 mb-10" id="texto-pregunta">{{ pregunta.texto_pregunta }}</h2>
+
+      <form hx-post="{{ base_url }}/responder" hx-target="#zona" hx-swap="outerHTML" hx-disabled-elt="find button"
+            method="post" action="{{ base_url }}/responder" class="grid grid-cols-2 gap-4 max-w-md" aria-describedby="texto-pregunta">
+        <input type="hidden" name="pregunta" value="{{ pregunta.codigo }}">
+        <button name="valor" value="1" class="btn btn-primario h-14 text-lg rounded-2xl">{{ ui.icono("check", "w-5 h-5") }}Sí</button>
+        <button name="valor" value="0" class="btn btn-secundario h-14 text-lg rounded-2xl">{{ ui.icono("x", "w-5 h-5") }}No</button>
+      </form>
+      <p class="text-[15px] text-slate-500 mt-5">¿No está seguro? Responda <b class="text-slate-700">No</b>; el sistema seguirá preguntando lo necesario.</p>
+
+      {% if dadas %}
+      <div class="mt-10 pt-6 border-t border-slate-100">
+        <div class="flex flex-wrap items-center gap-2 mb-2">
+          <p class="seccion-titulo">Respuestas dadas</p>
+          <div class="ml-auto flex gap-1 text-sm">
+            <button hx-post="{{ base_url }}/anterior" hx-target="#zona" hx-swap="outerHTML" class="rounded-lg px-2.5 py-1.5 font-medium text-slate-600 hover:bg-slate-100 inline-flex items-center gap-1.5">{{ ui.icono("undo", "w-4 h-4") }}Anterior</button>
+            <button hx-post="{{ base_url }}/reiniciar" hx-target="#zona" hx-swap="outerHTML" hx-confirm="¿Borrar todas las respuestas y empezar de nuevo?" class="rounded-lg px-2.5 py-1.5 font-medium text-slate-600 hover:bg-slate-100 inline-flex items-center gap-1.5">{{ ui.icono("refresh", "w-4 h-4") }}Reiniciar</button>
+          </div>
+        </div>
+        <ol>
+          {% for d in dadas %}
+          <li class="flex items-center gap-4 py-3 border-b border-slate-100 last:border-0">
+            <span class="h-7 w-7 shrink-0 rounded-full bg-slate-100 text-slate-500 grid place-items-center text-sm font-medium">{{ loop.index }}</span>
+            <span class="flex-1 text-[15px] text-slate-700">{{ d.texto }}</span>
+            <span class="rounded-lg px-2.5 py-1 text-sm font-semibold {{ 'bg-emerald-50 text-emerald-700' if d.valor else 'bg-slate-100 text-slate-600' }}">{{ "Sí" if d.valor else "No" }}</span>
+          </li>
+          {% endfor %}
+        </ol>
+      </div>
+      {% endif %}
+    </section>
+
+    {% if not experto %}
+    <details class="tarjeta px-6 py-5">
+      <summary class="cursor-pointer font-medium text-slate-700">¿Por qué le preguntamos esto?</summary>
+      <p class="mt-3 text-[15px] text-slate-600 leading-relaxed">
+        {% if dadas %}Con sus respuestas ya descartamos varias causas. Quedan {{ vivas }} posibles y esta pregunta ayuda a distinguir entre ellas.
+        {% else %}Es la primera señal que revisaría un especialista: separa los problemas más graves de los demás.{% endif %}
+        Solo le preguntamos lo necesario para llegar a una conclusión.
+      </p>
+    </details>
+    {% endif %}
+  </div>
+
+  {% if experto %}
+  <aside class="xl:col-span-2 tarjeta overflow-hidden h-fit">
+    <div class="px-6 py-5 border-b border-slate-100 flex items-center gap-3">
+      <span class="h-10 w-10 shrink-0 rounded-xl bg-indigo-50 text-indigo-600 grid place-items-center">{{ ui.icono("brain", "w-5 h-5") }}</span>
+      <div><h2 class="tarjeta-titulo">Razonamiento del sistema</h2><p class="text-sm text-slate-500">Encadenamiento hacia atrás en Prolog</p></div>
+    </div>
+    <div class="p-6">
+      <div class="flex items-baseline justify-between mb-3">
+        <p class="seccion-titulo">Hipótesis candidatas</p>
+        <p class="text-sm text-slate-500"><b class="text-lg text-slate-900">{{ vivas }}</b> de {{ candidatas | length }} en pie</p>
+      </div>
+      <div class="h-1.5 rounded-full bg-slate-100 mb-4 overflow-hidden"><div class="h-1.5 rounded-full bg-indigo-500 transition-all duration-500" style="width: {{ (vivas / (candidatas | length) * 100) | round }}%"></div></div>
+      <ul class="mb-6 max-h-[26rem] overflow-y-auto pr-1">
+        {% for c in candidatas %}
+        {% set fuera = c.estado == "descartada" %}
+        <li class="flex items-center gap-3 py-2.5 border-b border-slate-100 last:border-0 {{ 'opacity-45' if fuera }}">
+          <span class="font-mono text-xs rounded-md bg-slate-100 px-1.5 py-0.5 text-slate-600">{{ c.codigo }}</span>
+          <span class="flex-1 text-[15px] leading-snug {{ 'line-through decoration-slate-400 text-slate-500' if fuera else 'font-medium text-slate-900' }}">{{ c.diagnostico }}</span>
+          {% if fuera %}<span class="text-xs text-slate-400">descartada</span>
+          {% else %}{{ ui.urgencia(c.nivel_urgencia) }}{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      <p class="seccion-titulo mb-2">Memoria de trabajo</p>
+      <ul class="rounded-xl bg-slate-950 p-4 space-y-1.5 font-mono text-[13px] break-all">
+        {% for codigo, valor in memoria %}
+        <li><span class="text-indigo-300">hecho</span>(<span class="text-emerald-300">{{ codigo }}</span>, <span class="{{ 'text-emerald-300' if valor else 'text-rose-300' }}">{{ "si" if valor else "no" }}</span>).</li>
+        {% else %}
+        <li class="text-slate-500">% sin hechos todavía</li>
+        {% endfor %}
+        <li class="text-slate-500 pt-1">?- <span class="text-amber-300">siguiente_pregunta</span>(<span class="text-emerald-300">{{ pregunta.codigo }}</span>).</li>
+      </ul>
+    </div>
+  </aside>
+  {% endif %}
+</div>

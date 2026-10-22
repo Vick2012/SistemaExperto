@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block titulo %}Tablero{% endblock %}
+{% block encabezado %}Tablero{% endblock %}
+{% block acciones %}
+<a href="/diagnostico/nuevo" class="btn btn-primario">{{ ui.icono("plus", "w-4 h-4") }}<span class="hidden sm:inline">Nuevo diagnóstico</span></a>
+{% endblock %}
+{% block contenido %}
+{% set seg = indicadores.segundos %}
+
+<div class="mb-8">
+  <h2 class="text-2xl lg:text-3xl font-semibold tracking-tight text-slate-900">Hola, {{ usuario.nombre.split()[0] }}</h2>
+  <p class="mt-1 text-slate-500">Este es el estado de sus viviendas y diagnósticos.</p>
+</div>
+
+<div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6 mb-8">
+  {{ ui.tarjeta_dato("Diagnósticos este mes", indicadores.mes or 0, "", "brain", "indigo") }}
+  {{ ui.tarjeta_dato("Alertas críticas", indicadores.criticas or 0, "en todo el historial", "alert", "red") }}
+  {{ ui.tarjeta_dato("Citas pendientes", indicadores.citas or 0, "con especialistas", "calendar", "emerald") }}
+  {{ ui.tarjeta_dato("Tiempo medio", ("%d min %02d s" % ((seg|int) // 60, (seg|int) % 60)) if seg else "—", "por diagnóstico", "clock", "amber") }}
+</div>
+
+{% if recurrentes %}
+<div class="mb-8 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-900 flex gap-4">
+  <span class="h-10 w-10 shrink-0 rounded-xl bg-amber-100 grid place-items-center">{{ ui.icono("alert", "w-5 h-5") }}</span>
+  <div><p class="font-semibold">Síntoma recurrente</p>
+  <p class="text-[15px]">{% for r in recurrentes %}{{ r.categoria }} se repitió {{ r.veces }} veces en «{{ r.vivienda }}»{{ "; " if not loop.last else "" }}{% endfor %} en los últimos 90 días. Considere una revisión de fondo.</p></div>
+</div>
+{% endif %}
+
+<div class="grid xl:grid-cols-3 gap-6 lg:gap-8">
+  <section class="xl:col-span-2 tarjeta overflow-hidden">
+    <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+      <div><h3 class="tarjeta-titulo">Diagnósticos recientes</h3><p class="text-sm text-slate-500">Últimas 5 consultas</p></div>
+      <a href="/historial" class="text-sm font-semibold text-indigo-600 hover:text-indigo-700 inline-flex items-center gap-1">Ver historial {{ ui.icono("chevronR", "w-4 h-4") }}</a>
+    </div>
+    {% if recientes %}
+    <div class="overflow-x-auto"><table class="tabla">
+      <thead><tr><th>Fecha</th><th>Categoría</th><th>Diagnóstico</th><th>Urgencia</th></tr></thead>
+      <tbody>
+      {% for f in recientes %}
+        <tr class="cursor-pointer" onclick="location='/diagnostico/{{ f.id_atencion }}/reporte'">
+          <td class="text-slate-500 whitespace-nowrap">{{ f.fecha_inicio | fecha }}</td>
+          <td><span class="inline-flex items-center gap-2 text-slate-700">{{ ui.icono_categoria(f.categoria, "w-4 h-4 text-slate-400") }}{{ f.categoria_nombre }}</span></td>
+          <td class="font-medium text-slate-900"><a href="/diagnostico/{{ f.id_atencion }}/reporte">{{ f.diagnostico_texto }}</a></td>
+          <td>{{ ui.urgencia(f.nivel_urgencia) }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}
+    <div class="px-6 py-14 text-center">
+      <span class="mx-auto mb-3 h-12 w-12 rounded-2xl bg-slate-100 text-slate-500 grid place-items-center">{{ ui.icono("brain", "w-6 h-6") }}</span>
+      <p class="font-medium text-slate-900">Aún no hay diagnósticos</p>
+      <p class="text-sm text-slate-500">Empiece eligiendo el tipo de problema a la derecha.</p>
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="tarjeta p-6">
+    <h3 class="tarjeta-titulo">Iniciar diagnóstico</h3>
+    <p class="text-sm text-slate-500 mb-5">¿Qué tipo de problema nota?</p>
+    <div class="space-y-2">
+      {% for c in categorias %}
+      <a href="/diagnostico/nuevo?categoria={{ c.codigo }}" class="group flex items-center gap-4 rounded-xl border border-slate-200 p-3 transition hover:border-indigo-300 hover:bg-indigo-50/40">
+        <span class="h-10 w-10 shrink-0 rounded-xl grid place-items-center {{ 'bg-red-50 text-red-600' if c.codigo == 'GAS' else 'bg-indigo-50 text-indigo-600' }}">{{ ui.icono_categoria(c.codigo, "w-5 h-5") }}</span>
+        <span class="flex-1 min-w-0"><span class="block font-medium text-slate-900">{{ c.nombre }}</span><span class="block text-sm text-slate-500 truncate">{{ c.descripcion }}</span></span>
+        <span class="text-slate-300 group-hover:text-indigo-500">{{ ui.icono("chevronR", "w-5 h-5") }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+
+<div class="mt-6 lg:mt-8 grid xl:grid-cols-3 gap-6 lg:gap-8">
+  <section class="xl:col-span-2 tarjeta p-6">
+    <div class="flex items-center justify-between mb-5">
+      <div><h3 class="tarjeta-titulo">Mis viviendas</h3><p class="text-sm text-slate-500">Inmuebles registrados</p></div>
+      <a href="/viviendas" class="btn btn-secundario">{{ ui.icono("plus", "w-4 h-4") }}Agregar</a>
+    </div>
+    {% if viviendas %}
+    <ul class="grid sm:grid-cols-2 gap-4">
+      {% for v in viviendas %}
+      <li class="rounded-xl border border-slate-200 p-4 flex items-center gap-4">
+        <span class="h-12 w-12 shrink-0 rounded-xl bg-slate-100 text-slate-600 grid place-items-center">{{ ui.icono("home", "w-6 h-6") }}</span>
+        <span class="min-w-0"><span class="block font-semibold text-slate-900 truncate">{{ v.alias }}</span>
+          <span class="block text-sm text-slate-500 truncate">{{ v.direccion }} · {{ v.ciudad }}</span>
+          <span class="block text-sm text-slate-500">{{ v.atenciones }} revisiones</span></span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-slate-500">Registre su primera vivienda para poder diagnosticar. <a class="font-semibold text-indigo-600" href="/viviendas">Registrar vivienda</a></p>
+    {% endif %}
+  </section>
+
+  {% if resumen %}
+  <section class="tarjeta p-6">
+    <div class="flex items-center gap-3 mb-5">
+      <span class="h-10 w-10 rounded-xl bg-violet-50 text-violet-600 grid place-items-center">{{ ui.icono("book", "w-5 h-5") }}</span>
+      <div><h3 class="tarjeta-titulo">Base de conocimiento</h3><p class="text-sm text-slate-500">Estado de las reglas</p></div>
+    </div>
+    <dl class="grid grid-cols-2 gap-3 mb-5">
+      {% for etiqueta, valor, color in [("Preguntas", resumen.preguntas, "text-slate-900"), ("Reglas", resumen.hipotesis, "text-slate-900"), ("Por validar", resumen.pendientes, "text-violet-700"), ("Críticas", resumen.criticas, "text-red-700")] %}
+      <div class="rounded-xl bg-slate-50 p-4"><dt class="text-sm text-slate-500">{{ etiqueta }}</dt><dd class="text-2xl font-semibold {{ color }}">{{ valor }}</dd></div>
+      {% endfor %}
+    </dl>
+    <a href="/conocimiento?pendientes=1" class="btn btn-secundario w-full">Revisar reglas pendientes</a>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block encabezado %}{{ titulo }}{% endblock %}
+{% macro aviso() %}
+<div class="max-w-lg mx-auto mt-10 tarjeta p-8 text-center">
+  <span class="mx-auto mb-4 h-12 w-12 rounded-full bg-amber-50 text-amber-700 grid place-items-center">{{ ui.icono("alert", "w-6 h-6") }}</span>
+  <h2 class="text-xl font-semibold mb-2">{{ titulo }}</h2>
+  <p class="text-slate-600 mb-6">{{ mensaje }}</p>
+  <a href="/" class="btn btn-primario">Volver al tablero</a>
+</div>
+{% endmacro %}
+{% block contenido %}{{ aviso() }}{% endblock %}
+{% block publico %}<div class="p-4">{{ aviso() }}</div>{% endblock %}

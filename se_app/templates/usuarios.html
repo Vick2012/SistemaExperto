@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% import "_form_usuario.html" as fu with context %}
+{% block titulo %}Usuarios{% endblock %}
+{% block encabezado %}Usuarios y roles{% endblock %}
+{% block acciones %}
+<button type="button" onclick="document.getElementById('nuevo').showModal()" class="btn btn-primario">{{ ui.icono("plus", "w-4 h-4") }}Nuevo usuario</button>
+{% endblock %}
+{% block contenido %}
+{% if creado %}
+<div role="status" class="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-emerald-800 flex gap-3">{{ ui.icono("check", "w-5 h-5 shrink-0") }}Se creó el usuario <b>{{ creado }}</b>. Ya puede iniciar sesión.</div>
+{% endif %}
+
+<div class="tarjeta overflow-x-auto">
+  <table class="tabla">
+    <thead>
+      <tr><th>Usuario</th><th>Documento</th><th>Contacto</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr>
+    </thead>
+    <tbody>
+    {% for f in filas %}
+      <tr>
+        <td>
+          <div class="flex items-center gap-3">
+            <span class="h-10 w-10 shrink-0 rounded-full bg-indigo-50 text-indigo-700 grid place-items-center text-sm font-semibold">{{ f.nombres[0] }}{{ f.apellidos[0] }}</span>
+            <span><span class="block font-medium text-slate-900">{{ f.nombres }} {{ f.apellidos }}</span><span class="block text-sm text-slate-500">{{ f.usuario }}</span></span>
+          </div>
+        </td>
+        <td class="text-slate-600 whitespace-nowrap">{{ f.tipo_documento }} {{ f.numero_documento }}</td>
+        <td class="text-slate-600">{{ f.correo }}{% if f.telefono %}<span class="block text-sm text-slate-500">{{ f.telefono }}</span>{% endif %}</td>
+        <td>
+          <form method="post" action="/usuarios/{{ f.id_usuario }}/rol">
+            <select name="rol" onchange="this.form.submit()" aria-label="Rol de {{ f.usuario }}" class="campo h-10 w-auto" {{ "disabled" if f.id_usuario == usuario.id }}>
+              {% for r in roles %}<option value="{{ r }}" {{ "selected" if r == f.rol }}>{{ r | capitalize }}</option>{% endfor %}
+            </select>
+          </form>
+        </td>
+        <td>
+          {% if not f.activo %}<span class="text-xs font-semibold rounded-lg bg-slate-100 text-slate-500 px-2.5 py-1">Inactivo</span>
+          {% elif f.bloqueado %}<span class="text-xs font-semibold rounded-lg bg-red-50 text-red-700 px-2.5 py-1">Bloqueado</span>
+          {% else %}<span class="text-xs font-semibold rounded-lg bg-emerald-50 text-emerald-700 px-2.5 py-1">Activo</span>{% endif %}
+        </td>
+        <td>
+          <div class="flex gap-3 text-sm font-medium">
+            {% if f.bloqueado %}<form method="post" action="/usuarios/{{ f.id_usuario }}/desbloquear"><button class="text-indigo-600 hover:underline">Desbloquear</button></form>{% endif %}
+            {% if f.id_usuario != usuario.id %}<form method="post" action="/usuarios/{{ f.id_usuario }}/activo"><button class="{{ 'text-red-600' if f.activo else 'text-emerald-700' }} hover:underline">{{ "Desactivar" if f.activo else "Activar" }}</button></form>{% endif %}
+          </div>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<dialog id="nuevo" class="w-[calc(100%-2rem)] max-w-2xl rounded-2xl p-0 shadow-2xl backdrop:bg-slate-950/60" {{ "open" if errores }}>
+  <form method="post" action="/usuarios" novalidate>
+    <div class="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+      <div><h2 class="text-lg font-semibold text-slate-900">Nuevo usuario</h2><p class="text-sm text-slate-500">La contraseña se guarda cifrada.</p></div>
+      <button type="button" onclick="this.closest('dialog').close()" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Cerrar">{{ ui.icono("x", "w-5 h-5") }}</button>
+    </div>
+    <div class="max-h-[70vh] overflow-y-auto px-6 py-6">
+      {% if errores %}
+      <div role="alert" class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 flex gap-3">{{ ui.icono("alert", "w-5 h-5 shrink-0") }}Revise los campos marcados en rojo.</div>
+      {% endif %}
+      {{ fu.campos(datos, errores, tipos_documento, roles) }}
+    </div>
+    <div class="flex justify-end gap-3 border-t border-slate-100 px-6 py-4">
+      <button type="button" onclick="this.closest('dialog').close()" class="btn btn-secundario">Cancelar</button>
+      <button class="btn btn-primario">Crear usuario</button>
+    </div>
+  </form>
+</dialog>
+{% if errores %}
+<script>
+  // El dialogo llega abierto con errores; se reabre como modal para bloquear el fondo.
+  const d = document.getElementById("nuevo"); d.close(); d.showModal();
+</script>
+{% endif %}
+{% endblock %}

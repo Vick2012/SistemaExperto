@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    @apply outline-none ring-2 ring-indigo-500 ring-offset-1;
+  }
+}
+
+@layer components {
+  .tarjeta { @apply rounded-2xl bg-white border border-slate-200/80 shadow-sm shadow-slate-200/50; }
+  .tarjeta-titulo { @apply text-base font-semibold text-slate-900; }
+
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 h-10 text-sm font-semibold transition disabled:opacity-60 disabled:cursor-not-allowed; }
+  .btn-lg { @apply h-12 px-6 text-base; }
+  .btn-primario { @apply bg-indigo-600 text-white shadow-sm shadow-indigo-600/20 hover:bg-indigo-700 active:bg-indigo-800; }
+  .btn-secundario { @apply border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-400; }
+  .btn-peligro { @apply bg-red-600 text-white hover:bg-red-700; }
+
+  .campo { @apply h-11 w-full rounded-xl border border-slate-300 bg-white px-3.5 text-[15px] outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15; }
+  textarea.campo { @apply h-auto py-2.5; }
+  .etiqueta { @apply block text-sm font-medium text-slate-700 mb-1.5; }
+
+  .tabla { @apply w-full text-[15px]; }
+  .tabla thead { @apply bg-slate-50/80 text-left; }
+  .tabla th { @apply px-5 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap; }
+  .tabla td { @apply px-5 py-4 align-middle; }
+  .tabla tbody tr { @apply border-t border-slate-100 transition-colors; }
+  .tabla tbody tr:hover { @apply bg-slate-50/70; }
+
+  .seccion-titulo { @apply text-xs font-semibold uppercase tracking-wider text-slate-500; }
+}
+
+/* Textura del panel de marca del login. */
+.fondo-cuadricula {
+  background-image: linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* Lienzo del arbol de decision. */
+.cuadricula-suave {
+  background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+@media print {
+  #lienzo { max-height: none !important; overflow: visible !important; background: none; }
+}
+
+/* Entrada suave de cada pregunta nueva. */
+.aparecer { animation: aparecer .25s ease both; }
+@keyframes aparecer { from { opacity: 0; transform: translateY(4px) } to { opacity: 1; transform: none } }
+@media (prefers-reduced-motion: reduce) { .aparecer { animation: none; } }
+
+/* Indicador mientras HTMX espera al motor. */
+.htmx-request button, button.htmx-request { cursor: progress; }
+
+/* Reporte en PDF (Imprimir > Guardar como PDF). */
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff !important; }
+  main { padding: 0 !important; }
+  .print\:static { position: static !important; }
+}

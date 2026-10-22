@@ -1,0 +1,4 @@
+{% extends "base.html" %}
+{% block titulo %}Diagnosticar · {{ atencion.categoria_nombre }}{% endblock %}
+{% block encabezado %}Diagnosticar · {{ atencion.categoria_nombre }}{% endblock %}
+{% block contenido %}{% include "_pregunta.html" %}{% endblock %}

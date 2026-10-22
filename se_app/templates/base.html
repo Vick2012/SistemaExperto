@@ -1,0 +1,70 @@
+{% import "_ui.html" as ui %}
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block titulo %}SE Vivienda{% endblock %} · SE Vivienda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/app.css">
+<script src="/static/js/htmx.min.js" defer></script>
+</head>
+<body class="font-sans text-slate-800 antialiased text-base bg-slate-50">
+{% if usuario %}
+{% set nav = [("/", "home", "Tablero"), ("/diagnostico/nuevo", "brain", "Diagnosticar"), ("/historial", "clock", "Historial"), ("/citas", "calendar", "Citas"), ("/viviendas", "building", "Mis viviendas")] %}
+{% set nav_exp = [("/conocimiento", "book", "Base de conocimiento"), ("/arbol", "tree", "Árbol de decisión")] %}
+{% set nav_admin = [("/bitacora", "list", "Bitácora"), ("/usuarios", "users", "Usuarios")] %}
+{% macro enlace(item) -%}
+  {%- set activo = (item[0] == "/" and ruta_actual == "/") or (item[0] != "/" and ruta_actual.startswith(item[0].rsplit("/nuevo", 1)[0])) -%}
+  <a href="{{ item[0] }}" class="group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-[15px] font-medium transition {{ 'bg-indigo-500/15 text-white ring-1 ring-inset ring-indigo-400/20' if activo else 'text-slate-400 hover:text-white hover:bg-white/5' }}" {% if activo %}aria-current="page"{% endif %}>
+    <span class="{{ 'text-indigo-300' if activo else 'text-slate-500 group-hover:text-slate-300' }}">{{ ui.icono(item[1], "w-5 h-5") }}</span>{{ item[2] }}</a>
+{%- endmacro %}
+<div class="flex min-h-screen">
+  <aside id="barra" class="no-print fixed inset-y-0 left-0 z-40 w-72 shrink-0 -translate-x-full lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen transition-transform flex flex-col bg-slate-950 px-5 py-6 gap-8">
+    <a href="/" class="flex items-center gap-3 px-1">
+      <span class="h-10 w-10 rounded-xl bg-indigo-500 text-white grid place-items-center shadow-lg shadow-indigo-500/30">{{ ui.icono("shield", "w-5 h-5") }}</span>
+      <span><span class="block text-white font-semibold leading-tight">SE Vivienda</span><span class="block text-slate-500 text-sm">Diagnóstico experto</span></span>
+    </a>
+    <nav class="space-y-1" aria-label="Principal">
+      <p class="px-3.5 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Consulta</p>
+      {% for i in nav %}{{ enlace(i) }}{% endfor %}
+    </nav>
+    {% if experto %}
+    <nav class="space-y-1" aria-label="Experto">
+      <p class="px-3.5 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Experto / Admin</p>
+      {% for i in nav_exp %}{{ enlace(i) }}{% endfor %}
+      {% if usuario.rol == "ADMINISTRADOR" %}{% for i in nav_admin %}{{ enlace(i) }}{% endfor %}{% endif %}
+    </nav>
+    {% endif %}
+    <div class="mt-auto flex items-center gap-3 rounded-xl bg-white/5 p-3">
+      <span class="h-10 w-10 shrink-0 rounded-full bg-indigo-500/20 text-indigo-200 grid place-items-center text-sm font-semibold">{{ usuario.nombre.split()[0][0] }}{{ usuario.nombre.split()[-1][0] }}</span>
+      <span class="flex-1 min-w-0"><span class="block text-sm text-white font-medium truncate">{{ usuario.nombre }}</span><span class="block text-xs text-slate-400">{{ {"CONSULTANTE": "Consultante", "EXPERTO": "Experto de dominio", "ADMINISTRADOR": "Administrador"}[usuario.rol] }}</span></span>
+      <a href="/salir" class="rounded-lg p-2 text-slate-400 hover:text-white hover:bg-white/10" title="Cerrar sesión" aria-label="Cerrar sesión">{{ ui.icono("logout", "w-5 h-5") }}</a>
+    </div>
+  </aside>
+  <div id="velo" class="no-print fixed inset-0 z-30 bg-slate-950/60 hidden lg:hidden" onclick="menu(false)"></div>
+
+  <div class="flex-1 min-w-0 flex flex-col">
+    <header class="no-print sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
+      <div class="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-10">
+        <button class="lg:hidden rounded-lg border border-slate-200 p-2" onclick="menu(true)" aria-label="Abrir menú">{{ ui.icono("menu", "w-5 h-5") }}</button>
+        <h1 class="text-lg sm:text-xl font-semibold tracking-tight truncate">{% block encabezado %}{% endblock %}</h1>
+        <div class="ml-auto flex items-center gap-2">{% block acciones %}{% endblock %}</div>
+      </div>
+    </header>
+    {% block banner %}{% endblock %}
+    <main class="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-10 py-6 lg:py-10">{% block contenido %}{% endblock %}</main>
+  </div>
+</div>
+<script>
+  function menu(abrir) {
+    document.getElementById("barra").classList.toggle("-translate-x-full", !abrir);
+    document.getElementById("velo").classList.toggle("hidden", !abrir);
+  }
+</script>
+{% else %}
+{% block publico %}{% endblock %}
+{% endif %}
+</body>
+</html>

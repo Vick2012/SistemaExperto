@@ -1,0 +1,44 @@
+{# Campos del formulario de usuario, compartidos por el registro publico y
+   el alta que hace el administrador. Recibe datos (lo ya escrito) y errores. #}
+{% import "_ui.html" as ui %}
+
+{% macro campo(nombre, etiqueta, tipo="text", autocompletar="", ayuda="", requerido=true) %}
+{%- set error = errores.get(nombre) -%}
+<div>
+  <label for="f-{{ nombre }}" class="etiqueta">{{ etiqueta }}{% if not requerido %} <span class="font-normal text-slate-400">(opcional)</span>{% endif %}</label>
+  <input id="f-{{ nombre }}" name="{{ nombre }}" type="{{ tipo }}" {{ "required" if requerido }}
+         {% if autocompletar %}autocomplete="{{ autocompletar }}"{% endif %}
+         {% if tipo != "password" %}value="{{ datos.get(nombre, '') }}"{% endif %}
+         {% if error %}aria-invalid="true" aria-describedby="e-{{ nombre }}"{% endif %}
+         class="campo {{ 'border-red-400 focus:border-red-500 focus:ring-red-500/15' if error }}">
+  {% if error %}<p id="e-{{ nombre }}" class="mt-1.5 text-sm text-red-600">{{ error }}</p>
+  {% elif ayuda %}<p class="mt-1.5 text-sm text-slate-500">{{ ayuda }}</p>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro campos(datos, errores, tipos_documento, roles=none) %}
+<div class="grid sm:grid-cols-2 gap-x-5 gap-y-5">
+  {{ campo("nombres", "Nombres", autocompletar="given-name") }}
+  {{ campo("apellidos", "Apellidos", autocompletar="family-name") }}
+  <div>
+    <label for="f-tipo_documento" class="etiqueta">Tipo de documento</label>
+    <select id="f-tipo_documento" name="tipo_documento" class="campo">
+      {% for codigo, nombre in tipos_documento %}<option value="{{ codigo }}" {{ "selected" if datos.get("tipo_documento", "CC") == codigo }}>{{ nombre }}</option>{% endfor %}
+    </select>
+  </div>
+  {{ campo("numero_documento", "Número de documento") }}
+  {{ campo("correo", "Correo electrónico", "email", "email") }}
+  {{ campo("telefono", "Teléfono", "tel", "tel", requerido=false) }}
+  {% if roles %}
+  <div class="sm:col-span-2">
+    <label for="f-rol" class="etiqueta">Rol</label>
+    <select id="f-rol" name="rol" class="campo">
+      {% for r in roles %}<option value="{{ r }}" {{ "selected" if datos.get("rol", "CONSULTANTE") == r }}>{{ {"CONSULTANTE": "Consultante · diagnostica su vivienda", "EXPERTO": "Experto de dominio · mantiene la base de conocimiento", "ADMINISTRADOR": "Administrador · gestiona usuarios y bitácora"}[r] }}</option>{% endfor %}
+    </select>
+  </div>
+  {% endif %}
+  <div class="sm:col-span-2 border-t border-slate-100 pt-5">{{ campo("usuario", "Nombre de usuario", autocompletar="username", ayuda="Con él iniciará sesión. Letras, números, punto o guion.") }}</div>
+  {{ campo("contrasena", "Contraseña", "password", "new-password", "Mínimo 8 caracteres.") }}
+  {{ campo("confirmacion", "Repita la contraseña", "password", "new-password") }}
+</div>
+{% endmacro %}

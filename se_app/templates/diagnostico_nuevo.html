@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block titulo %}Nuevo diagnóstico{% endblock %}
+{% block encabezado %}Nuevo diagnóstico{% endblock %}
+{% macro paso(numero, titulo, ayuda) %}
+<div class="flex items-start gap-4 mb-5">
+  <span class="h-9 w-9 shrink-0 rounded-full bg-indigo-600 text-white grid place-items-center text-sm font-semibold">{{ numero }}</span>
+  <div><h2 class="text-lg font-semibold text-slate-900">{{ titulo }}</h2><p class="text-[15px] text-slate-500">{{ ayuda }}</p></div>
+</div>
+{% endmacro %}
+{% block contenido %}
+<form method="post" action="/diagnostico" class="max-w-5xl mx-auto space-y-6">
+  <div class="mb-2">
+    <h2 class="text-2xl lg:text-3xl font-semibold tracking-tight text-slate-900">Cuéntenos qué está pasando</h2>
+    <p class="mt-1 text-slate-500">Tres datos y empezamos. Después le haremos solo las preguntas necesarias.</p>
+  </div>
+
+  {% if error %}
+  <div role="alert" class="rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-red-800 flex gap-3">{{ ui.icono("alert", "w-5 h-5 shrink-0") }}{{ error }}</div>
+  {% endif %}
+
+  <section class="tarjeta p-6 lg:p-8">
+    {{ paso(1, "¿En qué vivienda?", "Elija el inmueble donde nota el problema.") }}
+    {% if viviendas %}
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      {% for v in viviendas %}
+      <label class="cursor-pointer rounded-xl border border-slate-200 p-4 flex gap-4 items-center transition hover:border-slate-300 has-[:checked]:border-indigo-500 has-[:checked]:ring-2 has-[:checked]:ring-indigo-500/20 has-[:checked]:bg-indigo-50/40">
+        <input type="radio" name="id_vivienda" value="{{ v.id_vivienda }}" class="h-4 w-4 accent-indigo-600" {{ "checked" if loop.first }}>
+        <span class="h-10 w-10 shrink-0 rounded-xl bg-slate-100 text-slate-600 grid place-items-center">{{ ui.icono("home", "w-5 h-5") }}</span>
+        <span class="min-w-0"><span class="block font-semibold text-slate-900 truncate">{{ v.alias }}</span><span class="block text-sm text-slate-500 truncate">{{ v.direccion }}</span></span>
+      </label>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-slate-600">Primero registre una vivienda. <a href="/viviendas" class="font-semibold text-indigo-600">Registrar vivienda</a></p>
+    {% endif %}
+  </section>
+
+  <section class="tarjeta p-6 lg:p-8">
+    {{ paso(2, "¿En qué parte de la casa?", "Así podremos detectar problemas que se repiten en la misma zona.") }}
+    <div class="flex flex-wrap gap-2.5">
+      {% for z in zonas %}
+      <label class="cursor-pointer">
+        <input type="radio" name="zona" value="{{ z }}" class="peer sr-only" {{ "checked" if loop.first }}>
+        <span class="inline-block rounded-full border border-slate-300 bg-white px-5 py-2 text-[15px] font-medium text-slate-700 transition hover:border-slate-400 peer-checked:bg-slate-900 peer-checked:text-white peer-checked:border-slate-900 peer-focus-visible:ring-4 peer-focus-visible:ring-indigo-500/20">{{ z }}</span>
+      </label>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="tarjeta p-6 lg:p-8">
+    {{ paso(3, "¿Qué tipo de problema nota?", "Si nota varios, empiece por el que más le preocupa.") }}
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      {% for c in categorias %}
+      <label class="cursor-pointer rounded-xl border border-slate-200 p-4 flex gap-4 items-start transition hover:border-slate-300 has-[:checked]:border-indigo-500 has-[:checked]:ring-2 has-[:checked]:ring-indigo-500/20 has-[:checked]:bg-indigo-50/40">
+        <input type="radio" name="categoria" value="{{ c.codigo }}" class="sr-only" {{ "checked" if c.codigo == elegida }}>
+        <span class="h-11 w-11 shrink-0 rounded-xl grid place-items-center {{ 'bg-red-50 text-red-600' if c.codigo == 'GAS' else 'bg-indigo-50 text-indigo-600' }}">{{ ui.icono_categoria(c.codigo, "w-5 h-5") }}</span>
+        <span><span class="block font-semibold text-slate-900">{{ c.nombre }}</span><span class="block text-sm text-slate-500 leading-snug">{{ c.descripcion }}</span></span>
+      </label>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-3 pt-2">
+    <a href="/" class="btn btn-lg btn-secundario">Cancelar</a>
+    <button class="btn btn-lg btn-primario" {{ "disabled" if not viviendas }}>Comenzar preguntas {{ ui.icono("arrowR", "w-5 h-5") }}</button>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block titulo %}Historial{% endblock %}
+{% block encabezado %}Historial de diagnósticos{% endblock %}
+{% block contenido %}
+{% if recurrentes %}
+<div class="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-[15px] text-amber-900">
+  <b>Síntoma recurrente:</b>
+  {% for r in recurrentes %}{{ r.categoria }} ({{ r.veces }} veces en «{{ r.vivienda }}»){{ ", " if not loop.last }}{% endfor %} en los últimos 90 días.
+</div>
+{% endif %}
+<form hx-get="/historial" hx-target="#tabla" hx-trigger="change" hx-push-url="true" class="flex flex-wrap gap-3 mb-6" method="get" action="/historial">
+  <select name="categoria" aria-label="Categoría" class="campo w-auto">
+    <option value="">Todas las categorías</option>
+    {% for c in categorias %}<option value="{{ c.codigo }}" {{ "selected" if c.codigo == categoria }}>{{ c.nombre }}</option>{% endfor %}
+  </select>
+  <select name="zona" aria-label="Zona" class="campo w-auto">
+    <option value="">Todas las zonas</option>
+    {% for z in zonas %}<option {{ "selected" if z == zona }}>{{ z }}</option>{% endfor %}
+  </select>
+  <noscript><button class="btn btn-secundario">Filtrar</button></noscript>
+</form>
+<div id="tabla">{% include "_historial_tabla.html" %}</div>
+{% endblock %}

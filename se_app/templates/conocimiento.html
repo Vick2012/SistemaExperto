@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block titulo %}Base de conocimiento{% endblock %}
+{% block encabezado %}Base de conocimiento{% endblock %}
+{% block acciones %}
+<a href="/arbol?categoria={{ categoria }}" class="btn btn-secundario">{{ ui.icono("tree", "w-4 h-4") }}<span class="hidden sm:inline">Ver árbol</span></a>
+<button hx-post="/conocimiento/recargar" class="btn btn-secundario" title="Vuelve a cargar las reglas de MySQL en el motor Prolog">{{ ui.icono("refresh", "w-4 h-4") }}Recargar motor</button>
+{% endblock %}
+{% block contenido %}
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  {{ ui.tarjeta_dato("Preguntas activas", resumen.preguntas) }}
+  {{ ui.tarjeta_dato("Reglas activas", resumen.hipotesis) }}
+  <a href="/conocimiento?categoria={{ categoria }}&pendientes=1" class="tarjeta p-4 hover:border-violet-400">
+    <p class="text-xs text-slate-500 mb-1">Por validar</p><p class="text-2xl font-semibold text-violet-700">{{ resumen.pendientes }}</p>
+    <p class="text-xs text-slate-500 mt-1">reglas complementarias</p></a>
+  {{ ui.tarjeta_dato("Críticas", resumen.criticas, "solo el administrador las desactiva") }}
+</div>
+
+<div class="grid xl:grid-cols-5 gap-6">
+  <section class="xl:col-span-3 tarjeta overflow-hidden h-fit">
+    <nav class="flex overflow-x-auto border-b border-slate-200 px-2" aria-label="Categorías">
+      {% for c in categorias %}
+      <a href="/conocimiento?categoria={{ c.codigo }}{{ '&pendientes=1' if pendientes }}" class="px-3 py-2.5 text-sm whitespace-nowrap border-b-2 {{ 'border-indigo-600 text-indigo-700 font-medium' if c.codigo == categoria else 'border-transparent text-slate-500 hover:text-slate-800' }}">{{ c.nombre }}</a>
+      {% endfor %}
+    </nav>
+    <div class="px-4 py-2 flex items-center gap-3 text-xs text-slate-500 border-b border-slate-100">
+      <span>{{ filas | length }} regla(s){{ " pendientes de validar" if pendientes }}</span>
+      {% if pendientes %}<a href="/conocimiento?categoria={{ categoria }}" class="text-indigo-600 font-medium">Ver todas</a>
+      {% else %}<a href="/conocimiento?categoria={{ categoria }}&pendientes=1" class="text-indigo-600 font-medium">Solo por validar</a>{% endif %}
+    </div>
+    <div class="overflow-x-auto">
+      <table class="tabla">
+        <thead><tr><th>Código</th><th>Hipótesis</th><th>Urgencia</th><th>FC</th><th>Estado</th></tr></thead>
+        <tbody>
+        {% for f in filas %}
+          <tr class="cursor-pointer {{ 'bg-indigo-50/60' if h and f.codigo == h.codigo }} {{ 'opacity-50' if not f.activa }}"
+              hx-get="/conocimiento/hipotesis/{{ f.codigo }}" hx-target="#granulo" hx-swap="outerHTML"
+              onclick="document.querySelectorAll('tr.bg-indigo-50\\/60').forEach(r => r.classList.remove('bg-indigo-50/60')); this.classList.add('bg-indigo-50/60')">
+            <td class="font-mono text-xs">{{ f.codigo }}</td>
+            <td class="font-medium">{{ f.diagnostico }}<span class="block text-xs font-normal text-slate-500">{{ f.condiciones }} condición(es)</span></td>
+            <td>{{ ui.urgencia(f.nivel_urgencia) }}</td>
+            <td class="text-slate-600">{{ f.factor_certeza }}%</td>
+            <td>
+              {% if not f.activa %}<span class="text-xs text-slate-500">Inactiva</span>
+              {% elif not f.validada %}<span class="text-xs rounded-md bg-violet-50 text-violet-700 ring-1 ring-inset ring-violet-600/20 px-2 py-0.5">Por validar</span>
+              {% else %}<span class="text-xs text-emerald-700">Validada</span>{% endif %}
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="5" class="py-10 text-center text-slate-500">No hay reglas para mostrar.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="xl:col-span-2 space-y-6">
+    {% include "_granulo.html" %}
+    <section class="tarjeta p-5 text-sm">
+      <h3 class="font-semibold mb-3">Últimos cambios</h3>
+      <ul class="space-y-2 text-slate-600">
+        {% for b in cambios %}
+        <li><span class="font-mono text-xs">{{ b.codigo_registro }}</span> · {{ b.detalle }}<span class="block text-xs text-slate-400">{{ b.nombres }} {{ b.apellidos }} · {{ b.fecha_cambio | fecha("%d %b, %H:%M") }}</span></li>
+        {% else %}
+        <li class="text-slate-500">Sin cambios registrados.</li>
+        {% endfor %}
+      </ul>
+    </section>
+  </div>
+</div>
+{% endblock %}

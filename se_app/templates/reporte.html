@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block titulo %}Reporte de diagnóstico{% endblock %}
+{% block encabezado %}Reporte de diagnóstico{% endblock %}
+{% block acciones %}
+<button onclick="window.print()" class="btn btn-secundario">{{ ui.icono("download", "w-4 h-4") }}<span class="hidden sm:inline">Descargar PDF</span></button>
+<a href="/diagnostico/nuevo" class="btn btn-primario">{{ ui.icono("plus", "w-4 h-4") }}<span class="hidden sm:inline">Nuevo</span></a>
+{% endblock %}
+
+{% block banner %}
+{% if inmediatas %}
+<div role="alert" class="sticky top-16 z-10 bg-red-600 text-white shadow-lg shadow-red-900/20 print:static print:shadow-none">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-10 py-4">
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-3">
+      <span class="h-10 w-10 shrink-0 rounded-xl bg-white/15 grid place-items-center">{{ ui.icono("alert", "w-6 h-6") }}</span>
+      <div class="flex-1 min-w-[220px]">
+        <p class="text-xs font-bold uppercase tracking-widest text-red-100">Riesgo crítico · actúe ahora</p>
+        <p class="text-lg font-semibold leading-tight">{{ d.diagnostico_texto }}</p>
+      </div>
+      <a href="tel:123" class="no-print btn h-11 bg-white text-red-700 hover:bg-red-50">{{ ui.icono("phone", "w-5 h-5") }}Llamar al 123</a>
+    </div>
+    <ol class="mt-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-2">
+      {% for paso in inmediatas %}
+      <li class="flex items-start gap-3 rounded-xl bg-white/10 px-3 py-2.5 text-[15px]"><span class="h-6 w-6 shrink-0 rounded-full bg-white text-red-700 grid place-items-center text-sm font-bold">{{ loop.index }}</span>{{ paso }}</li>
+      {% endfor %}
+    </ol>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block contenido %}
+{% set acento = {"Critica": "bg-red-500", "Alta": "bg-orange-500", "Media": "bg-amber-400", "Baja": "bg-sky-500"}.get(d.nivel_urgencia, "bg-slate-300") %}
+<div class="grid xl:grid-cols-3 gap-6 lg:gap-8">
+  <section class="xl:col-span-2 space-y-6">
+    <div class="tarjeta overflow-hidden">
+      <div class="h-1.5 {{ acento }}"></div>
+      <div class="p-6 sm:p-8">
+        <p class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500 mb-5">
+          <span class="inline-flex items-center gap-1.5 font-medium text-slate-700">{{ ui.icono_categoria(atencion.categoria, "w-4 h-4") }}{{ atencion.categoria_nombre }}</span>
+          <span>·</span><span>{{ atencion.vivienda }}</span><span>·</span><span>{{ atencion.zona_vivienda }}</span><span>·</span><span>{{ d.fecha_generacion | fecha("%d %b %Y, %H:%M") }}</span>
+        </p>
+        {% if concluyente %}
+        <p class="seccion-titulo mb-2">Diagnóstico probable</p>
+        <h2 class="text-3xl sm:text-4xl font-semibold tracking-tight text-slate-900 mb-6">{{ d.diagnostico_texto }}</h2>
+        <div class="rounded-2xl bg-indigo-50/60 border border-indigo-100 p-5 sm:p-6 flex gap-4">
+          <span class="h-10 w-10 shrink-0 rounded-xl bg-white text-indigo-600 grid place-items-center shadow-sm">{{ ui.icono("check", "w-5 h-5") }}</span>
+          <div><p class="font-semibold text-slate-900 mb-1">Qué hacer</p><p class="text-[17px] leading-relaxed text-slate-700">{{ d.accion_recomendada }}</p></div>
+        </div>
+        {% else %}
+        <h2 class="text-3xl font-semibold tracking-tight text-slate-900 mb-3">Sin diagnóstico concluyente</h2>
+        <p class="text-[17px] leading-relaxed text-slate-700 mb-6">Con la información suministrada no podemos determinar una causa. Revise sus respuestas o evalúe otra categoría; si el problema persiste, agende una revisión general.</p>
+        <div class="flex flex-wrap gap-3">
+          <form method="post" action="/diagnostico/{{ atencion.id_atencion }}/corregir"><button class="btn btn-lg btn-secundario">{{ ui.icono("undo", "w-5 h-5") }}Revisar mis respuestas</button></form>
+          <a href="/diagnostico/nuevo" class="btn btn-lg btn-primario">Evaluar otra categoría</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if ruta %}
+    {% if experto %}
+    <div class="rounded-2xl bg-slate-950 text-slate-200 p-6 sm:p-8">
+      <div class="flex items-center gap-3 mb-5">
+        <span class="h-10 w-10 rounded-xl bg-white/10 text-indigo-300 grid place-items-center">{{ ui.icono("brain", "w-5 h-5") }}</span>
+        <div><h3 class="font-semibold text-white">Explicación del motor</h3><p class="text-sm text-slate-400">{{ "Regla que se cumplió" if concluyente else "Ninguna regla se cumplió: conclusión por defecto" }}</p></div>
+        {% if d.codigo_hipotesis %}<span class="ml-auto rounded-lg bg-white/10 px-2.5 py-1 font-mono text-sm text-slate-300">{{ d.codigo_hipotesis }}</span>{% endif %}
+      </div>
+      <div class="font-mono text-[15px] space-y-2 leading-relaxed">
+        {% for p in ruta %}<div class="flex gap-4"><span class="text-indigo-400 font-semibold w-12 shrink-0">{{ p.conector }}</span><span>{{ p.texto }}</span></div>{% endfor %}
+        <div class="flex gap-4 pt-2 mt-2 border-t border-white/10"><span class="text-emerald-400 font-semibold w-12 shrink-0">Then</span><span class="text-white">{{ d.diagnostico_texto if concluyente else "conclusión por defecto" }}</span></div>
+      </div>
+    </div>
+    {% else %}
+    <details class="tarjeta p-6 sm:p-8" open>
+      <summary class="cursor-pointer text-lg font-semibold text-slate-900">¿Por qué llegamos a este resultado?</summary>
+      <ul class="mt-5 space-y-4">
+        {% for p in ruta %}
+        <li class="flex gap-4 items-start">
+          <span class="mt-0.5 h-7 w-7 shrink-0 rounded-full grid place-items-center {{ 'bg-emerald-100 text-emerald-700' if p.valor else 'bg-slate-100 text-slate-500' }}">{{ ui.icono("check" if p.valor else "x", "w-4 h-4") }}</span>
+          <span class="text-[17px] text-slate-700">Usted indicó que <b class="text-slate-900">{{ p.texto }}</b>.</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </details>
+    {% endif %}
+    {% endif %}
+    <p class="flex items-start gap-2 text-sm text-slate-500">{{ ui.icono("shield", "w-4 h-4 mt-0.5 shrink-0") }}Este reporte es una orientación inicial y no reemplaza la visita de un especialista certificado.</p>
+  </section>
+
+  <aside class="space-y-6">
+    {% if concluyente %}
+    <div class="tarjeta p-6">
+      <p class="seccion-titulo mb-4">Resumen</p>
+      <dl class="space-y-5">
+        <div class="flex items-center justify-between gap-3"><dt class="text-slate-500">Urgencia</dt><dd>{{ ui.urgencia(d.nivel_urgencia, true) }}</dd></div>
+        <div>
+          <div class="flex items-center justify-between mb-2"><dt class="text-slate-500">Factor de certeza</dt><dd class="text-2xl font-semibold text-slate-900">{{ d.factor_certeza }}%</dd></div>
+          <div class="h-2 rounded-full bg-slate-100"><div class="h-2 rounded-full bg-indigo-600" style="width: {{ d.factor_certeza }}%"></div></div>
+        </div>
+        <div class="flex items-start gap-3 rounded-xl bg-slate-50 p-4">
+          <span class="h-10 w-10 shrink-0 rounded-xl bg-white text-indigo-600 grid place-items-center shadow-sm">{{ ui.icono("user", "w-5 h-5") }}</span>
+          <div><dt class="text-sm text-slate-500">Especialista sugerido</dt><dd class="font-semibold text-slate-900">{{ d.especialista_sugerido }}</dd></div>
+        </div>
+        {% if experto %}
+        <div class="flex items-start justify-between gap-3 pt-4 border-t border-slate-100"><dt class="text-slate-500">Regla</dt>
+          <dd class="text-right"><span class="font-mono font-semibold">{{ d.codigo_hipotesis }}</span>{% if d.validada == 0 %} <span class="text-sm text-violet-700">(por validar)</span>{% endif %}
+          {% if d.fuente %}<span class="block text-sm text-slate-500">{{ d.fuente }}</span>{% endif %}</dd></div>
+        {% endif %}
+      </dl>
+    </div>
+    <div class="no-print">{% include "_citas.html" %}</div>
+    <form method="post" action="/diagnostico/{{ atencion.id_atencion }}/corregir" class="no-print">
+      <button class="w-full rounded-xl py-2 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-800">¿Se equivocó en una respuesta? Corregir</button>
+    </form>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

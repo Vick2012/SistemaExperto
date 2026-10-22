@@ -1,0 +1,22 @@
+{% import "_ui.html" as ui %}
+<div class="tarjeta overflow-x-auto">
+  <table class="tabla">
+    <thead>
+      <tr><th>Fecha</th><th>Vivienda</th><th>Zona</th><th>Categoría</th><th>Diagnóstico</th><th>Urgencia</th></tr>
+    </thead>
+    <tbody>
+    {% for f in filas %}
+      <tr>
+        <td class="whitespace-nowrap text-slate-500">{{ f.fecha_inicio | fecha("%d %b %Y, %H:%M") }}</td>
+        <td>{{ f.vivienda }}</td>
+        <td>{{ f.zona_vivienda }}</td>
+        <td>{{ f.categoria_nombre }}</td>
+        <td class="font-medium"><a class="hover:text-indigo-700" href="/diagnostico/{{ f.id_atencion }}/reporte">{{ f.diagnostico_texto }}</a></td>
+        <td>{{ ui.urgencia(f.nivel_urgencia) }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="6" class="py-10 text-center text-slate-500">No hay diagnósticos con estos filtros.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>

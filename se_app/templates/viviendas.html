@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block titulo %}Mis viviendas{% endblock %}
+{% block encabezado %}Mis viviendas{% endblock %}
+{% macro campo(nombre, etiqueta, tipo="text", requerido=true, ejemplo="") %}
+<label class="block"><span class="etiqueta">{{ etiqueta }}</span>
+<input name="{{ nombre }}" type="{{ tipo }}" {{ "required" if requerido }} placeholder="{{ ejemplo }}" class="campo"></label>
+{% endmacro %}
+{% block contenido %}
+{% if bienvenida %}
+<div role="status" class="mb-6 rounded-2xl border border-indigo-200 bg-indigo-50 px-5 py-4 flex gap-4">
+  <span class="h-10 w-10 shrink-0 rounded-xl bg-white text-indigo-600 grid place-items-center shadow-sm">{{ ui.icono("check", "w-5 h-5") }}</span>
+  <div><p class="font-semibold text-slate-900">¡Bienvenido, {{ usuario.nombre.split()[0] }}! Su cuenta está lista.</p>
+  <p class="text-[15px] text-slate-600">Como primer paso, registre su vivienda en el formulario. Después podrá iniciar su primer diagnóstico.</p></div>
+</div>
+{% endif %}
+<div class="grid xl:grid-cols-3 gap-6 lg:gap-8">
+  <section class="xl:col-span-2 space-y-4">
+    {% for v in viviendas %}
+    <article class="tarjeta p-6 flex flex-wrap items-center gap-5">
+      <span class="h-12 w-12 rounded-xl bg-indigo-50 text-indigo-600 grid place-items-center">{{ ui.icono("home") }}</span>
+      <div class="flex-1 min-w-[200px]">
+        <h2 class="text-lg font-semibold text-slate-900">{{ v.alias }}</h2>
+        <p class="text-sm text-slate-500">{{ v.direccion }} · {{ v.ciudad }} · {{ v.tipo_vivienda }}{% if v.antiguedad_anios %} · {{ v.antiguedad_anios }} años{% endif %}</p>
+      </div>
+      <p class="text-sm text-slate-500">{{ v.atenciones }} revisiones{% if v.ultima %} · última {{ v.ultima | fecha }}{% endif %}</p>
+      <a href="/diagnostico/nuevo" class="btn btn-secundario">Diagnosticar</a>
+    </article>
+    {% else %}
+    <div class="rounded-2xl bg-white border border-dashed border-slate-300 p-10 text-center text-slate-500">Aún no tiene viviendas registradas.</div>
+    {% endfor %}
+  </section>
+  <form method="post" action="/viviendas" class="tarjeta p-6 space-y-4 h-fit">
+    <h2 class="tarjeta-titulo">Registrar vivienda</h2>
+    {{ campo("alias", "Nombre para reconocerla", ejemplo="Casa principal") }}
+    {{ campo("direccion", "Dirección", ejemplo="Cra 15 # 82-30") }}
+    {{ campo("ciudad", "Ciudad", ejemplo="Bogotá") }}
+    <label class="block"><span class="etiqueta">Tipo</span>
+      <select name="tipo_vivienda" class="campo"><option>Casa</option><option>Apartamento</option><option>Otro</option></select></label>
+    {{ campo("antiguedad_anios", "Antigüedad (años)", "number", false) }}
+    <button class="btn btn-primario w-full">Guardar vivienda</button>
+  </form>
+</div>
+{% endblock %}

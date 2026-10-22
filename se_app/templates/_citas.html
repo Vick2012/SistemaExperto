@@ -1,0 +1,26 @@
+{# Agendamiento con el especialista (CU06). HTMX reemplaza este bloque al guardar. #}
+{% import "_ui.html" as ui %}
+<div id="citas" class="tarjeta p-6">
+  <div class="flex items-center gap-3 mb-5">
+    <span class="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 grid place-items-center">{{ ui.icono("calendar", "w-5 h-5") }}</span>
+    <div><h3 class="tarjeta-titulo">Agendar visita</h3><p class="text-sm text-slate-500">Con el especialista sugerido</p></div>
+  </div>
+  {% if cita_ok %}
+  <p role="status" class="mb-4 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-800">Cita programada. La encontrará también en «Citas».</p>
+  {% endif %}
+  {% for c in citas %}
+  <div class="mb-3 rounded-xl border border-slate-200 px-4 py-3 flex items-center gap-3">
+    {{ ui.icono("calendar", "w-5 h-5 text-indigo-600") }}
+    <span class="flex-1 font-medium text-slate-800">{{ c.fecha_programada | fecha("%d %b %Y, %H:%M") }}</span>
+    <span class="rounded-lg bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700">{{ c.estado | capitalize }}</span>
+  </div>
+  {% endfor %}
+  <form hx-post="/diagnostico/{{ atencion.id_atencion }}/cita" hx-target="#citas" hx-swap="outerHTML"
+        method="post" action="/diagnostico/{{ atencion.id_atencion }}/cita" class="space-y-4">
+    <label class="block"><span class="etiqueta">Fecha y hora</span>
+      <input type="datetime-local" name="fecha" required min="{{ ahora.strftime('%Y-%m-%dT%H:%M') }}" class="campo"></label>
+    <label class="block"><span class="etiqueta">Observaciones <span class="font-normal text-slate-400">(opcional)</span></span>
+      <input name="observaciones" maxlength="500" placeholder="Ej.: llamar antes de llegar" class="campo"></label>
+    <button class="btn btn-lg btn-primario w-full">Programar cita</button>
+  </form>
+</div>

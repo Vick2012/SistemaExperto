@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block titulo %}Citas{% endblock %}
+{% block encabezado %}Citas con especialistas{% endblock %}
+{% block contenido %}
+<div class="tarjeta overflow-x-auto">
+  <table class="tabla">
+    <thead>
+      <tr><th>Fecha</th><th>Especialista</th><th>Diagnóstico</th><th>Vivienda</th><th>Estado</th><th></th></tr>
+    </thead>
+    <tbody>
+    {% for c in citas %}
+      <tr>
+        <td class="whitespace-nowrap">{{ c.fecha_programada | fecha("%d %b %Y, %H:%M") }}</td>
+        <td>{{ c.tipo_especialista }}</td>
+        <td><a class="font-medium hover:text-indigo-700" href="/diagnostico/{{ c.id_atencion }}/reporte">{{ c.diagnostico_texto }}</a> {{ ui.urgencia(c.nivel_urgencia) }}</td>
+        <td class="text-slate-500">{{ c.vivienda }} · {{ c.zona_vivienda }}</td>
+        <td><span class="text-xs rounded-md px-2 py-0.5 {{ 'bg-slate-100 text-slate-500' if c.estado == 'CANCELADA' else 'bg-indigo-50 text-indigo-700' }}">{{ c.estado | capitalize }}</span></td>
+        <td class="text-right">
+          {% if c.estado in ("PROGRAMADA", "CONFIRMADA") and c.fecha_programada > ahora %}
+          <form method="post" action="/citas/{{ c.id_cita }}/cancelar" onsubmit="return confirm('¿Cancelar esta cita?')"><button class="text-sm text-red-600 hover:underline">Cancelar</button></form>
+          {% endif %}
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="6" class="py-10 text-center text-slate-500">No tiene citas. Puede agendar una desde el reporte de un diagnóstico.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block titulo %}Iniciar sesión{% endblock %}
+{% block publico %}
+<div class="min-h-screen grid lg:grid-cols-[1.15fr_1fr] bg-slate-50">
+  <!-- Panel de marca -->
+  <section class="relative hidden lg:flex flex-col justify-between overflow-hidden bg-slate-950 text-white px-14 py-12 xl:px-20">
+    <div class="absolute inset-0 opacity-[0.07] fondo-cuadricula" aria-hidden="true"></div>
+    <div class="absolute -top-40 -right-40 h-[520px] w-[520px] rounded-full bg-indigo-600/30 blur-3xl" aria-hidden="true"></div>
+    <div class="absolute -bottom-48 -left-24 h-[420px] w-[420px] rounded-full bg-sky-500/10 blur-3xl" aria-hidden="true"></div>
+
+    <div class="relative flex items-center gap-3">
+      <span class="h-11 w-11 rounded-xl bg-indigo-500 grid place-items-center shadow-lg shadow-indigo-500/30">{{ ui.icono("shield", "w-6 h-6") }}</span>
+      <span>
+        <span class="block text-lg font-semibold leading-tight">SE Vivienda</span>
+        <span class="block text-sm text-slate-400">Sistema experto de diagnóstico</span>
+      </span>
+    </div>
+
+    <div class="relative max-w-xl 2xl:max-w-2xl">
+      <p class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-indigo-200 mb-6">
+        <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>Motor de inferencia en SWI-Prolog
+      </p>
+      <h1 class="text-4xl xl:text-5xl 2xl:text-6xl font-semibold leading-[1.1] tracking-tight mb-5">
+        Diagnostique su vivienda con el criterio de cuatro especialistas.
+      </h1>
+      <p class="text-lg text-slate-300 leading-relaxed mb-10">
+        Responda preguntas sencillas de Sí o No y reciba la causa probable, su urgencia y a quién llamar, con la explicación de cómo se llegó a esa conclusión.
+      </p>
+
+      <dl class="grid grid-cols-4 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10">
+        {% for valor, etiqueta in [("36", "síntomas"), ("49", "reglas"), ("7", "categorías"), ("4", "expertos")] %}
+        <div class="bg-slate-950/80 px-4 py-5">
+          <dt class="sr-only">{{ etiqueta }}</dt>
+          <dd class="text-3xl font-semibold tracking-tight">{{ valor }}</dd>
+          <dd class="text-sm text-slate-400">{{ etiqueta }}</dd>
+        </div>
+        {% endfor %}
+      </dl>
+    </div>
+
+    <div class="relative flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-400">
+      {% for icono, texto in [("zap", "Electricista"), ("droplet", "Fontanero"), ("building", "Ingeniero civil"), ("flame", "Técnico de gas")] %}
+      <span class="inline-flex items-center gap-2">{{ ui.icono(icono, "w-4 h-4 text-slate-500") }}{{ texto }}</span>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Formulario -->
+  <section class="flex flex-col justify-center px-5 py-10 sm:px-10">
+    <div class="w-full max-w-md 2xl:max-w-lg mx-auto">
+      <div class="lg:hidden flex items-center gap-3 mb-10">
+        <span class="h-11 w-11 rounded-xl bg-indigo-600 text-white grid place-items-center">{{ ui.icono("shield", "w-6 h-6") }}</span>
+        <span><span class="block text-lg font-semibold leading-tight">SE Vivienda</span><span class="block text-sm text-slate-500">Sistema experto de diagnóstico</span></span>
+      </div>
+
+      <div class="rounded-2xl bg-white border border-slate-200 shadow-xl shadow-slate-200/60 p-8 sm:p-10">
+        <h2 class="text-2xl sm:text-3xl font-semibold tracking-tight mb-2">Bienvenido</h2>
+        <p class="text-slate-500 mb-8">Ingrese con su usuario para continuar.</p>
+
+        {% if error %}
+        <div role="alert" class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 flex gap-3">{{ ui.icono("alert", "w-5 h-5 shrink-0") }}<span>{{ error }}</span></div>
+        {% endif %}
+
+        <form method="post" action="/login" class="space-y-5">
+          <div>
+            <label for="usuario" class="block text-sm font-medium text-slate-700 mb-2">Usuario</label>
+            <div class="relative">
+              <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">{{ ui.icono("user", "w-5 h-5") }}</span>
+              <input id="usuario" name="usuario" required autofocus autocomplete="username" value="{{ usuario_ingresado or '' }}" placeholder="Su nombre de usuario"
+                     class="h-12 w-full rounded-xl border border-slate-300 bg-white pl-12 pr-4 text-base outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15">
+            </div>
+          </div>
+          <div>
+            <label for="contrasena" class="block text-sm font-medium text-slate-700 mb-2">Contraseña</label>
+            <div class="relative">
+              <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">{{ ui.icono("lock", "w-5 h-5") }}</span>
+              <input id="contrasena" name="contrasena" type="password" required autocomplete="current-password" placeholder="••••••••"
+                     class="h-12 w-full rounded-xl border border-slate-300 bg-white pl-12 pr-12 text-base outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15">
+              <button type="button" onclick="verClave(this)" class="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-2 text-slate-400 hover:text-slate-700" aria-label="Mostrar contraseña">{{ ui.icono("eye", "w-5 h-5") }}</button>
+            </div>
+          </div>
+          <button class="h-12 w-full rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-base font-semibold shadow-lg shadow-indigo-600/25 transition inline-flex items-center justify-center gap-2">
+            Ingresar {{ ui.icono("arrowR", "w-5 h-5") }}
+          </button>
+        </form>
+
+        <div class="my-6 flex items-center gap-3 text-sm text-slate-400"><span class="h-px flex-1 bg-slate-200"></span>o<span class="h-px flex-1 bg-slate-200"></span></div>
+        <a href="/registro" class="btn btn-lg btn-secundario w-full">Crear una cuenta nueva</a>
+
+        <p class="mt-6 flex items-start gap-2 text-sm text-slate-500">{{ ui.icono("shield", "w-4 h-4 mt-0.5 shrink-0") }}Por seguridad, la cuenta se bloquea 15 minutos tras 5 intentos fallidos.</p>
+      </div>
+      <p class="mt-8 text-center text-sm text-slate-400">Universidad Manuela Beltrán · Sistemas Expertos · 2026</p>
+    </div>
+  </section>
+</div>
+<script>
+  function verClave(boton) {
+    const campo = document.getElementById("contrasena");
+    const visible = campo.type === "text";
+    campo.type = visible ? "password" : "text";
+    boton.setAttribute("aria-label", visible ? "Mostrar contraseña" : "Ocultar contraseña");
+  }
+</script>
+{% endblock %}

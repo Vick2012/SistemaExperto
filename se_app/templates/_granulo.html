@@ -1,0 +1,53 @@
+{# Granulo de conocimiento: la regla If/And/Then y sus metadatos editables (CU08, CU09). #}
+{% import "_ui.html" as ui %}
+<section id="granulo" class="tarjeta p-5">
+  {% if h %}
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="font-semibold text-sm">Gránulo <span class="font-mono">{{ h.codigo }}</span></h3>
+    {{ ui.urgencia(h.nivel_urgencia) }}
+  </div>
+
+  <div class="rounded-lg bg-slate-900 text-slate-200 p-4 font-mono text-xs space-y-1.5 mb-5">
+    {% for c in condiciones %}
+    <div class="flex gap-3"><span class="text-indigo-400 font-semibold w-9 shrink-0">{{ "If" if c.orden == 1 else "And" }}</span><span>{{ c.enunciado }}</span></div>
+    {% endfor %}
+    <div class="flex gap-3 pt-1.5 border-t border-slate-700"><span class="text-emerald-400 font-semibold w-9 shrink-0">Then</span><span>{{ h.diagnostico }}</span></div>
+  </div>
+
+  {% if error %}<p role="alert" class="mb-3 rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-800">{{ error }}</p>{% endif %}
+  {% if guardado is not none %}
+  <p role="status" class="mb-3 rounded-md bg-emerald-50 border border-emerald-200 px-3 py-2 text-sm text-emerald-800">
+    {% if guardado %}Cambios guardados en {{ guardado | join(", ") }}. Quedaron en la bitácora y el motor ya usa la regla actualizada.{% else %}No había cambios que guardar.{% endif %}
+  </p>
+  {% endif %}
+
+  <form hx-post="/conocimiento/hipotesis/{{ h.codigo }}" hx-target="#granulo" hx-swap="outerHTML" class="space-y-3 text-sm">
+    <label class="block"><span class="block font-medium mb-1">Diagnóstico (Then)</span>
+      <input name="diagnostico" required maxlength="255" value="{{ h.diagnostico }}" class="campo"></label>
+    <div class="grid grid-cols-2 gap-3">
+      <label class="block"><span class="block font-medium mb-1">Urgencia</span>
+        <select name="nivel_urgencia" class="campo">
+          {% for n in URGENCIAS %}<option value="{{ n }}" {{ "selected" if n == h.nivel_urgencia }}>{{ ETIQUETA_URGENCIA[n] }}</option>{% endfor %}
+        </select></label>
+      <label class="block"><span class="block font-medium mb-1">Factor de certeza (%)</span>
+        <input name="factor_certeza" type="number" min="0" max="100" required value="{{ h.factor_certeza }}" class="campo"></label>
+    </div>
+    <label class="block"><span class="block font-medium mb-1">Especialista</span>
+      <input name="especialista" required maxlength="120" value="{{ h.especialista }}" class="campo"></label>
+    <label class="block"><span class="block font-medium mb-1">Acción recomendada</span>
+      <textarea name="accion_recomendada" required maxlength="500" rows="3" class="campo">{{ h.accion_recomendada }}</textarea></label>
+    <div class="flex flex-wrap gap-x-5 gap-y-2">
+      <label class="inline-flex items-center gap-2"><input type="checkbox" name="validada" value="1" class="accent-indigo-600" {{ "checked" if h.validada }}>Validada por el experto</label>
+      <label class="inline-flex items-center gap-2 {{ 'opacity-50' if not puede_desactivar }}"><input type="checkbox" name="activa" value="1" class="accent-indigo-600" {{ "checked" if h.activa }} {{ "disabled" if not puede_desactivar }}>Activa</label>
+      {% if not puede_desactivar %}<input type="hidden" name="activa" value="1">{% endif %}
+    </div>
+    <p class="text-xs text-slate-500">Fuente: {{ h.fuente }}</p>
+    {% if h.nivel_urgencia == "Critica" %}
+    <p class="rounded-md bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900">Las reglas críticas solo puede desactivarlas un administrador. Cada cambio queda en la bitácora.</p>
+    {% endif %}
+    <button class="btn btn-primario w-full">Guardar cambios</button>
+  </form>
+  {% else %}
+  <p class="text-sm text-slate-500">Elija una regla de la tabla para ver su gránulo.</p>
+  {% endif %}
+</section>
