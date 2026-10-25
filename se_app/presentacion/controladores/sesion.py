@@ -26,6 +26,8 @@ class ControladorSesion(Controlador):
         self.ruta("GET", "/salir", self.cerrar_sesion)
 
     def ver_login(self, request: Request):
+        if request.session.get("usuario"):
+            return RedirectResponse("/", status_code=303)
         return self.vistas.pagina(request, "login.html", error=None)
 
     def iniciar_sesion(self, request: Request, usuario: str = Form(...), contrasena: str = Form(...)):

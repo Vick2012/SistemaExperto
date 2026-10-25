@@ -110,7 +110,7 @@ aplicacion/
 │   │   ├── seguridad_web.py         Sesión y control de acceso por rol
 │   │   ├── controladores/           Controlador base y sus cinco subclases
 │   │   ├── templates/               Pantallas Jinja2 (diseño B)
-│   │   └── static/                  CSS compilado y HTMX
+│   │   └── static/                  CSS compilado, HTMX y estructura.js (animación 3D del inicio de sesión)
 │   ├── negocio/                     CAPA DE NEGOCIO
 │   │   ├── modelos.py               Entidades: Hipotesis, Pregunta, Evidencia, Distribucion, Decision
 │   │   ├── inferencia_bayesiana.py  MotorBayesiano

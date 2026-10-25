@@ -7,6 +7,14 @@
     <div class="absolute inset-0 opacity-[0.07] fondo-cuadricula" aria-hidden="true"></div>
     <div class="absolute -top-40 -right-40 h-[520px] w-[520px] rounded-full bg-indigo-600/30 blur-3xl" aria-hidden="true"></div>
     <div class="absolute -bottom-48 -left-24 h-[420px] w-[420px] rounded-full bg-sky-500/10 blur-3xl" aria-hidden="true"></div>
+    <!-- Esqueleto 3D de una vivienda y un edificio girando (static/js/estructura.js) -->
+    <canvas id="estructura" class="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true"></canvas>
+    <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-slate-950/70 via-slate-950/25 to-transparent" aria-hidden="true"></div>
+    <button type="button" id="estructura-pausa" aria-label="Pausar la animación de fondo" title="Pausar la animación"
+            class="absolute bottom-6 right-6 z-10 grid h-10 w-10 place-items-center rounded-full border border-white/15 bg-white/5 text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300">
+      <span data-icono="pausa">{{ ui.icono("pause", "w-4 h-4") }}</span>
+      <span data-icono="reproducir" hidden>{{ ui.icono("play", "w-4 h-4") }}</span>
+    </button>
 
     <div class="relative flex items-center gap-3">
       <span class="h-11 w-11 rounded-xl bg-indigo-500 grid place-items-center shadow-lg shadow-indigo-500/30">{{ ui.icono("shield", "w-6 h-6") }}</span>
@@ -20,10 +28,10 @@
       <p class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-indigo-200 mb-6">
         <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>Motor de inferencia en SWI-Prolog
       </p>
-      <h1 class="text-4xl xl:text-5xl 2xl:text-6xl font-semibold leading-[1.1] tracking-tight mb-5">
+      <h1 class="texto-sobre-lienzo text-4xl xl:text-5xl 2xl:text-6xl font-semibold leading-[1.1] tracking-tight mb-5">
         Diagnostique su vivienda con el criterio de cuatro especialistas.
       </h1>
-      <p class="text-lg text-slate-300 leading-relaxed mb-10">
+      <p class="texto-sobre-lienzo text-lg text-slate-300 leading-relaxed mb-10">
         Responda preguntas sencillas de Sí o No y reciba la causa probable, su urgencia y a quién llamar, con la explicación de cómo se llegó a esa conclusión.
       </p>
 
@@ -93,6 +101,7 @@
     </div>
   </section>
 </div>
+<script src="/static/js/estructura.js" defer></script>
 <script>
   function verClave(boton) {
     const campo = document.getElementById("contrasena");
