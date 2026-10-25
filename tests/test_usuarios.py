@@ -8,8 +8,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from fastapi.testclient import TestClient  # noqa: E402
 
-from se_app import db  # noqa: E402
+from se_app.contenedor import contenedor  # noqa: E402
 from se_app.main import app  # noqa: E402
+
+db = contenedor.bd
 
 pytestmark = pytest.mark.skipif(not db.disponible(), reason="MySQL no disponible")
 

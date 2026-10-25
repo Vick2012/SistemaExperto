@@ -1,24 +1,34 @@
 # Sistema experto de diagnóstico de vivienda · Aplicación web
 
 Capa de presentación y motor de inferencia del proyecto de Sistemas Expertos
-(UMB, 2026). Sigue la arquitectura del manual:
+(UMB, 2026). El código está orientado a objetos y organizado en tres capas:
 
 ```
-Navegador ──HTMX──▶ FastAPI (se_app/main.py)
-                       │
-                       ├─▶ Motor de inferencia  SWI-Prolog  (prolog/motor.pl, vía Janus)
-                       │
-                       └─▶ MySQL 8: se_base_conocimiento  +  se_transaccional
+Navegador ──HTMX──▶ presentacion/   Controladores FastAPI y vistas Jinja2
+                        │
+                        ▼
+                    negocio/        MotorBayesiano · MotorProlog (SWI-Prolog vía Janus) · servicios
+                        │
+                        ▼
+                    datos/          Repositorios ──▶ MySQL 8: se_base_conocimiento + se_transaccional
 ```
 
-- **La base de conocimiento no está en el código** (RNF19). Al arrancar, y cada vez que el experto
-  cambia una regla, la aplicación lee las preguntas, hipótesis y respuestas de MySQL y las carga
-  en Prolog como hechos `pregunta/5`, `hipotesis/8` y `condicion/4`.
-- **El motor razona en Prolog**: encadenamiento hacia atrás (solo pregunta lo necesario),
-  resolución de conflictos por severidad y factor de certeza, y conclusión por defecto (RNF22).
-  Reproduce las consultas B3 y B5 de `04_consultas_granulos.sql`.
+- **La base de conocimiento no está en el código** (RNF19). Las reglas, sus antecedentes If/And y
+  sus factores de certeza se leen de MySQL; si el experto cambia una regla, el motor razona con el
+  cambio desde la siguiente consulta.
+- **Inferencia bayesiana con consultas granulares.** Tras cada respuesta, `MotorBayesiano` consulta
+  el gránulo de la pregunta respondida (qué reglas la usan y qué respuesta espera cada una),
+  actualiza la probabilidad de cada hipótesis con el teorema de Bayes y elige la siguiente pregunta
+  por ganancia de información. Al concluir reporta las 5 hipótesis más probables con su peso y la
+  hipótesis H0, «sin falla identificable» (conclusión por defecto, RNF22). El código no tiene
+  condicionales por regla.
+- **Prolog sigue en el sistema**: genera el árbol de decisión, verifica la coherencia de la base y
+  confirma lógicamente la regla ganadora (`prolog/motor.pl`).
 - **Diseño B · Centro de diagnóstico** (ver `../.21st/design.json`). El consultante ve un flujo sencillo;
-  el experto y el administrador ven además el razonamiento del motor en vivo.
+  el experto y el administrador ven además las probabilidades en vivo.
+
+El diseño del sistema de inferencia (diagramas de caja negra, de flujo de datos y de clases, y el
+documento del avance en Word y PDF) está en `../entrega_inferencia_bayesiana/`.
 
 ## Requisitos
 
@@ -35,6 +45,7 @@ Todos los comandos se ejecutan desde la carpeta `aplicacion`.
 
 1. **Encender MySQL.** Abra Docker Desktop y verifique que el contenedor `se-mysql` esté en verde.
    Si las bases no existen, ejecute en orden los scripts `01` a `04` de la carpeta del proyecto.
+   Después ejecute una vez `06_inferencia_bayesiana.sql`, que crea la tabla de hipótesis ponderadas.
 
 2. **Crear el entorno de Python** (solo la primera vez):
 
@@ -44,10 +55,11 @@ Todos los comandos se ejecutan desde la carpeta `aplicacion`.
    ```
 
 3. **Configurar la conexión** (opcional). Se usa `../mysql_local_prueba.env`. Para cambiar algo,
-   copie `.env.example` como `.env` y llene solo lo que quiera cambiar; los valores vacíos se ignoran.
+   cree `.env` en esta carpeta y llene solo lo que quiera cambiar; los valores vacíos se ignoran.
 
 4. **Crear los usuarios de prueba** (`admin`, `experto`, `consulta`) con contraseña cifrada.
-   La contraseña de prueba es el valor `SEED_PASSWORD` de `.env.example`.
+   La contraseña de prueba es el valor `SEED_PASSWORD` de `.env` (o de la variable de entorno
+   del mismo nombre).
 
    ```bash
    .venv\Scripts\python -m scripts.semilla
@@ -67,38 +79,51 @@ Todos los comandos se ejecutan desde la carpeta `aplicacion`.
 .venv\Scripts\python -m pytest -q tests
 ```
 
-Las pruebas unitarias del motor no necesitan MySQL. Con MySQL encendido, además recorren la ruta
-de **cada una de las reglas** de la base y los casos de la Tabla 52 del manual.
+Son 23 pruebas. Las unitarias del motor bayesiano y del motor Prolog no necesitan MySQL: usan
+`RepositorioEnMemoria`, que reemplaza a la capa de datos. Con MySQL encendido, además recorren la
+ruta de **cada una de las 49 reglas**, la conclusión por defecto en las 7 categorías y los casos de
+la Tabla 52 del manual.
 
 ## Estilos
 
 Tailwind se compila a un archivo local (la red no siempre alcanza el CDN):
 
 ```bash
-npx tailwindcss@3.4.16 -i estilos/app.css -o se_app/static/css/app.css --minify
+npx tailwindcss@3.4.16 -i estilos/app.css -o se_app/presentacion/static/css/app.css --minify
 ```
 
 Recompile después de agregar clases nuevas en las plantillas. HTMX 2.0.4 está en
-`se_app/static/js/htmx.min.js`.
+`se_app/presentacion/static/js/htmx.min.js`.
 
 ## Estructura
 
 ```
 aplicacion/
-├── prolog/motor.pl          Motor de inferencia (SWI-Prolog)
+├── prolog/motor.pl                  Motor de reglas (SWI-Prolog): árbol, coherencia y confirmación
 ├── se_app/
-│   ├── main.py              Rutas FastAPI
-│   ├── motor.py             Puente Python ↔ Prolog (Janus)
-│   ├── conocimiento.py      Lectura y edición de se_base_conocimiento + bitácora
-│   ├── atenciones.py        Viviendas, atenciones, diagnósticos, citas, historial
-│   ├── administracion.py    Usuarios y bitácora (administrador)
-│   ├── seguridad.py         Contraseñas scrypt, sesión, roles, bloqueo por intentos
-│   ├── alertas.py           Acciones inmediatas de las alertas críticas
-│   ├── templates/           Pantallas Jinja2 (diseño B)
-│   └── static/              CSS compilado y HTMX
-├── scripts/semilla.py       Usuarios de prueba
-├── tests/test_motor.py      Validación del motor
-└── estilos/app.css          Fuente de Tailwind
+│   ├── main.py                      Punto de entrada (uvicorn se_app.main:app)
+│   ├── config.py                    Configuración leída de los archivos .env
+│   ├── contenedor.py                Raíz de composición: crea e inyecta las tres capas
+│   ├── presentacion/                CAPA DE PRESENTACIÓN
+│   │   ├── app.py                   Crea FastAPI, registra los controladores y los errores
+│   │   ├── vistas.py                Render de plantillas y redirecciones HTMX
+│   │   ├── seguridad_web.py         Sesión y control de acceso por rol
+│   │   ├── controladores/           Controlador base y sus cinco subclases
+│   │   ├── templates/               Pantallas Jinja2 (diseño B)
+│   │   └── static/                  CSS compilado y HTMX
+│   ├── negocio/                     CAPA DE NEGOCIO
+│   │   ├── modelos.py               Entidades: Hipotesis, Pregunta, Evidencia, Distribucion, Decision
+│   │   ├── inferencia_bayesiana.py  MotorBayesiano
+│   │   ├── motor_prolog.py          MotorProlog (puente Janus)
+│   │   ├── servicio_*.py            Diagnóstico, conocimiento, usuarios y viviendas
+│   │   └── errores.py               Excepciones de negocio
+│   └── datos/                       CAPA DE DATOS
+│       ├── conexion.py              BaseDatos: pool de conexiones y transacciones
+│       └── repositorio_*.py         Conocimiento (consultas granulares), atenciones y usuarios
+├── scripts/semilla.py               Usuarios de prueba
+├── scripts/capturas.py              Capturas para la documentación (../mockups/capturas)
+├── tests/                           Motor bayesiano, motor Prolog y usuarios (23 pruebas)
+└── estilos/app.css                  Fuente de Tailwind
 ```
 
 ## Casos de uso cubiertos
@@ -108,9 +133,9 @@ aplicacion/
 | CU01 Iniciar sesión | `/login` (bloqueo tras 5 intentos) |
 | Registro de cuenta | `/registro` (público, siempre crea consultantes) |
 | CU02 Registrar vivienda | `/viviendas` |
-| CU03 Diagnosticar falla | `/diagnostico/nuevo` → preguntas Sí/No |
+| CU03 Diagnosticar falla | `/diagnostico/nuevo` → preguntas Sí/No elegidas por ganancia de información |
 | CU04 Alerta de riesgo crítico | Banner rojo en el reporte |
-| CU05 Reporte de diagnóstico | `/diagnostico/{id}/reporte` (Descargar PDF = imprimir) |
+| CU05 Reporte de diagnóstico | `/diagnostico/{id}/reporte` con las 5 hipótesis ponderadas (Descargar PDF = imprimir) |
 | CU06 Agendar cita | Reporte y `/citas` |
 | CU07 Consultar historial | `/historial` con filtros |
 | CU08 / CU09 Gestionar y validar reglas | `/conocimiento` (experto) |

@@ -20,7 +20,7 @@
   <a href="{{ item[0] }}" class="group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-[15px] font-medium transition {{ 'bg-indigo-500/15 text-white ring-1 ring-inset ring-indigo-400/20' if activo else 'text-slate-400 hover:text-white hover:bg-white/5' }}" {% if activo %}aria-current="page"{% endif %}>
     <span class="{{ 'text-indigo-300' if activo else 'text-slate-500 group-hover:text-slate-300' }}">{{ ui.icono(item[1], "w-5 h-5") }}</span>{{ item[2] }}</a>
 {%- endmacro %}
-<div class="flex min-h-screen">
+<div class="flex min-h-screen lg:bg-[linear-gradient(to_right,theme(colors.slate.950)_18rem,transparent_18rem)]">
   <aside id="barra" class="no-print fixed inset-y-0 left-0 z-40 w-72 shrink-0 -translate-x-full lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen transition-transform flex flex-col bg-slate-950 px-5 py-6 gap-8">
     <a href="/" class="flex items-center gap-3 px-1">
       <span class="h-10 w-10 rounded-xl bg-indigo-500 text-white grid place-items-center shadow-lg shadow-indigo-500/30">{{ ui.icono("shield", "w-5 h-5") }}</span>

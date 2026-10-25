@@ -57,18 +57,61 @@
       </div>
     </div>
 
+    {% if ranking %}
+    <div class="tarjeta p-6 sm:p-8">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-5">
+        <h3 class="text-lg font-semibold text-slate-900">{{ "Hipótesis ponderadas" if experto else "Causas posibles y su probabilidad" }}</h3>
+        <p class="text-sm text-slate-500">{{ "P(H | respuestas) calculada con el teorema de Bayes" if experto else "Según sus respuestas, qué tan probable es cada causa" }}</p>
+      </div>
+      <ol class="space-y-4">
+        {% for r in ranking %}
+        {% set es_h0 = r.codigo_hipotesis == "H0" %}
+        <li>
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mb-1.5">
+            <span class="h-6 w-6 shrink-0 rounded-full grid place-items-center text-xs font-semibold {{ 'bg-indigo-600 text-white' if loop.first else 'bg-slate-100 text-slate-600' }}">{{ loop.index }}</span>
+            {% if experto %}<span class="font-mono text-xs rounded-md px-1.5 py-0.5 {{ 'bg-slate-200 text-slate-600' if es_h0 else 'bg-indigo-50 text-indigo-700' }}">{{ r.codigo_hipotesis }}</span>{% endif %}
+            <span class="flex-1 min-w-[12rem] {{ 'italic text-slate-500' if es_h0 else 'font-medium text-slate-900' }}">{{ "Ninguna de estas causas (sin falla identificable)" if es_h0 else r.diagnostico_texto }}</span>
+            {% if not es_h0 and r.nivel_urgencia %}{{ ui.urgencia(r.nivel_urgencia) }}{% endif %}
+            <span class="w-16 text-right font-semibold tabular-nums text-slate-900">{{ r.probabilidad | pct }} %</span>
+          </div>
+          <div class="ml-9 h-2.5 rounded-full bg-slate-100 overflow-hidden"><div class="h-2.5 rounded-full {{ 'bg-slate-400' if es_h0 else ('bg-indigo-600' if loop.first else 'bg-indigo-300') }}" style="width: {{ [r.probabilidad * 100, 0.5] | max }}%"></div></div>
+          {% if experto %}<p class="ml-9 mt-1 text-xs text-slate-500">Probabilidad previa {{ r.probabilidad_previa | pct }} % → posterior {{ r.probabilidad | pct }} %</p>{% endif %}
+        </li>
+        {% endfor %}
+      </ol>
+    </div>
+    {% endif %}
+
     {% if ruta %}
     {% if experto %}
     <div class="rounded-2xl bg-slate-950 text-slate-200 p-6 sm:p-8">
-      <div class="flex items-center gap-3 mb-5">
+      <div class="flex flex-wrap items-center gap-3 mb-5">
         <span class="h-10 w-10 rounded-xl bg-white/10 text-indigo-300 grid place-items-center">{{ ui.icono("brain", "w-5 h-5") }}</span>
-        <div><h3 class="font-semibold text-white">Explicación del motor</h3><p class="text-sm text-slate-400">{{ "Regla que se cumplió" if concluyente else "Ninguna regla se cumplió: conclusión por defecto" }}</p></div>
-        {% if d.codigo_hipotesis %}<span class="ml-auto rounded-lg bg-white/10 px-2.5 py-1 font-mono text-sm text-slate-300">{{ d.codigo_hipotesis }}</span>{% endif %}
+        <div><h3 class="font-semibold text-white">Cómo cambió la probabilidad</h3><p class="text-sm text-slate-400">Efecto de cada respuesta sobre {{ d.codigo_hipotesis or "H0" }}, consultando su gránulo</p></div>
+        {% if confirmada_prolog %}<span class="ml-auto rounded-lg bg-emerald-500/15 px-2.5 py-1 text-sm text-emerald-300">Regla {{ d.codigo_hipotesis }} confirmada por el motor Prolog</span>{% endif %}
       </div>
-      <div class="font-mono text-[15px] space-y-2 leading-relaxed">
-        {% for p in ruta %}<div class="flex gap-4"><span class="text-indigo-400 font-semibold w-12 shrink-0">{{ p.conector }}</span><span>{{ p.texto }}</span></div>{% endfor %}
-        <div class="flex gap-4 pt-2 mt-2 border-t border-white/10"><span class="text-emerald-400 font-semibold w-12 shrink-0">Then</span><span class="text-white">{{ d.diagnostico_texto if concluyente else "conclusión por defecto" }}</span></div>
+      <div class="flex items-end gap-1.5 h-20 mb-2" aria-label="Probabilidad de la conclusión después de cada respuesta">
+        {% for v in trayectoria %}
+        <div class="flex-1 flex flex-col items-center justify-end h-full">
+          <span class="text-[11px] text-slate-400 mb-1 tabular-nums">{{ v | round | int }}%</span>
+          <div class="w-full rounded-t {{ 'bg-emerald-400' if loop.last else 'bg-indigo-400/70' }}" style="height: {{ [v, 2] | max }}%"></div>
+        </div>
+        {% endfor %}
       </div>
+      <p class="text-xs text-slate-500 mb-5">Previa y después de cada una de las {{ trayectoria | length - 1 }} respuestas.</p>
+      <table class="w-full text-sm">
+        <thead class="text-left text-xs uppercase tracking-wider text-slate-500"><tr><th class="pb-2 font-semibold">Respuesta</th><th class="pb-2 font-semibold">Efecto</th><th class="pb-2 font-semibold text-right">P(e|H)</th><th class="pb-2 font-semibold text-right">P(H)</th></tr></thead>
+        <tbody>
+        {% for a in aportes %}
+          <tr class="border-t border-white/10 align-top">
+            <td class="py-2 pr-3">{{ a.texto }}</td>
+            <td class="py-2 pr-3 whitespace-nowrap {{ 'text-emerald-300' if a.efecto == 'a favor' else ('text-rose-300' if a.efecto == 'en contra' else 'text-slate-400') }}">{{ a.efecto }}</td>
+            <td class="py-2 pr-3 text-right tabular-nums">{{ "%.2f" | format(a.verosimilitud) }}</td>
+            <td class="py-2 text-right tabular-nums whitespace-nowrap">{{ a.antes | pct }} → {{ a.despues | pct }} %</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
     </div>
     {% else %}
     <details class="tarjeta p-6 sm:p-8" open>
@@ -94,8 +137,12 @@
       <dl class="space-y-5">
         <div class="flex items-center justify-between gap-3"><dt class="text-slate-500">Urgencia</dt><dd>{{ ui.urgencia(d.nivel_urgencia, true) }}</dd></div>
         <div>
-          <div class="flex items-center justify-between mb-2"><dt class="text-slate-500">Factor de certeza</dt><dd class="text-2xl font-semibold text-slate-900">{{ d.factor_certeza }}%</dd></div>
-          <div class="h-2 rounded-full bg-slate-100"><div class="h-2 rounded-full bg-indigo-600" style="width: {{ d.factor_certeza }}%"></div></div>
+          {% set ganadora = ranking | selectattr("codigo_hipotesis", "equalto", d.codigo_hipotesis) | first %}
+          {% if ganadora %}
+          <div class="flex items-center justify-between mb-2"><dt class="text-slate-500">Probabilidad (Bayes)</dt><dd class="text-2xl font-semibold text-slate-900">{{ ganadora.probabilidad | pct }} %</dd></div>
+          <div class="h-2 rounded-full bg-slate-100 mb-4"><div class="h-2 rounded-full bg-indigo-600" style="width: {{ ganadora.probabilidad * 100 }}%"></div></div>
+          {% endif %}
+          <div class="flex items-center justify-between"><dt class="text-slate-500">Factor de certeza del experto</dt><dd class="font-semibold text-slate-900">{{ d.factor_certeza }} %</dd></div>
         </div>
         <div class="flex items-start gap-3 rounded-xl bg-slate-50 p-4">
           <span class="h-10 w-10 shrink-0 rounded-xl bg-white text-indigo-600 grid place-items-center shadow-sm">{{ ui.icono("user", "w-5 h-5") }}</span>

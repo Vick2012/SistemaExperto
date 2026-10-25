@@ -16,7 +16,8 @@
   {{ ui.tarjeta_dato("Diagnósticos este mes", indicadores.mes or 0, "", "brain", "indigo") }}
   {{ ui.tarjeta_dato("Alertas críticas", indicadores.criticas or 0, "en todo el historial", "alert", "red") }}
   {{ ui.tarjeta_dato("Citas pendientes", indicadores.citas or 0, "con especialistas", "calendar", "emerald") }}
-  {{ ui.tarjeta_dato("Tiempo medio", ("%d min %02d s" % ((seg|int) // 60, (seg|int) % 60)) if seg else "—", "por diagnóstico", "clock", "amber") }}
+  {%- set tiempo = "—" if not seg else (("%d s" % (seg|int)) if (seg|int) < 60 else ("%d min %02d s" % ((seg|int) // 60, (seg|int) % 60))) %}
+  {{ ui.tarjeta_dato("Tiempo medio", tiempo, "por diagnóstico", "clock", "amber") }}
 </div>
 
 {% if recurrentes %}

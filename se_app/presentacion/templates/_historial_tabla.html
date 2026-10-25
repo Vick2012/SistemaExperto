@@ -2,7 +2,7 @@
 <div class="tarjeta overflow-x-auto">
   <table class="tabla">
     <thead>
-      <tr><th>Fecha</th><th>Vivienda</th><th>Zona</th><th>Categoría</th><th>Diagnóstico</th><th>Urgencia</th></tr>
+      <tr><th>Fecha</th><th>Vivienda</th><th>Zona</th><th>Categoría</th><th>Diagnóstico</th><th>Urgencia</th><th class="text-right">Probabilidad</th></tr>
     </thead>
     <tbody>
     {% for f in filas %}
@@ -13,9 +13,10 @@
         <td>{{ f.categoria_nombre }}</td>
         <td class="font-medium"><a class="hover:text-indigo-700" href="/diagnostico/{{ f.id_atencion }}/reporte">{{ f.diagnostico_texto }}</a></td>
         <td>{{ ui.urgencia(f.nivel_urgencia) }}</td>
+        <td class="text-right tabular-nums text-slate-600">{{ (f.probabilidad | pct ~ " %") if f.probabilidad is not none else "—" }}</td>
       </tr>
     {% else %}
-      <tr><td colspan="6" class="py-10 text-center text-slate-500">No hay diagnósticos con estos filtros.</td></tr>
+      <tr><td colspan="7"class="py-10 text-center text-slate-500">No hay diagnósticos con estos filtros.</td></tr>
     {% endfor %}
     </tbody>
   </table>
